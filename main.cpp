@@ -60,6 +60,7 @@ int createSamples(vector <string> const &lineList, vector <CL::Sample*> &samples
                 samples.push_back(tmp);
             }
         }
+        else delete tmpCell;
     }
     return numSamples;
 }
