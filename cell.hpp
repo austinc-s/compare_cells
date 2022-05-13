@@ -3,6 +3,8 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
+#include <string>
+#include <cstring>
 
 namespace CL{
     struct cellType{
@@ -20,10 +22,13 @@ namespace CL{
             ~Sample();
 
             //public functions
-            int parseFields(std::string inLine);
+            CL::cellType* parseFields(std::string inLine, int &added);
 
             //getters
             std::vector <CL::cellType*> const &getCells(){return cells;}
+
+            //setters
+            void pushCell(CL::cellType *cell){ cells.push_back(cell);}
         private:
             std::vector <CL::cellType*> cells;
 

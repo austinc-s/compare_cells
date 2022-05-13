@@ -7,9 +7,7 @@ using namespace std;
 * The next two fields only have " " if not NA type
 * Returns 1 if pushed, 0 if not pushed
 */
-int CL::Sample::parseFields(std::string inLine){
-    char delimiter = ',';
-    char quote = '"';
+CL::cellType* CL::Sample::parseFields(string inLine, int &added){
     vector <string> ar;
     int fieldNum = 0; //tracks which field we are parsing (0 index)
     bool checkedStrict = false;
@@ -17,7 +15,8 @@ int CL::Sample::parseFields(std::string inLine){
     for(int i = 0; i < inLine.size(); i++){ //for each char in the line
         if(fieldNum == 3 && !checkedStrict){
             if(inLine[i+1] != '"'){
-                return 0;
+                added = 0;
+                return (new CL::cellType);
             }
             else checkedStrict = true;
         }
@@ -36,10 +35,10 @@ int CL::Sample::parseFields(std::string inLine){
             ar.push_back(token);
         }
     }
-
     CL::cellType* tmp = makeCell(ar.at(1), ar.at(2), ar.at(3), ar.at(4));
-    cells.push_back(tmp);
-    return 1;
+    //cells.push_back(tmp);
+    added = 1;
+    return tmp;
 }
 
 /*makeCell()

@@ -3,5 +3,6 @@
 test_input_ks.csv
 
 cell.o
+main.o
 
 compare_cells
