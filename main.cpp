@@ -10,25 +10,29 @@ void compareOutputs(vector <CL::Sample*> &KSsamples, vector <CL::Sample*> &SMsam
 void compareSamples(CL::Sample* KSsample, CL::Sample* SMsample, DA::Disagreement* difs);
 int compareCells(CL::cellType *cell1, CL::cellType *cell2);
 int compareNonStrict(string non_strict1, string non_strict2);
+void countCells(vector <CL::Sample*> &samples);
 void displayAllSamples(vector <CL::Sample*> &samples);
 void displaySample(CL::Sample *sample);
 void displayAllCellCounts(vector <CL::Sample*> &KSsamples, vector <CL::Sample*> &SMsamples);
 void displayCellCount(CL::Sample *sample);
+void writeAllCellCounts(vector <CL::Sample*> &KSsamples, vector <CL::Sample*> &SMsamples);
 
 int main(int argc, char** argv){
     vector <CL::Sample*> KSsamples;
     vector <CL::Sample*> SMsamples;
     vector <string> lineListKS;
     vector <string> lineListSM;
-    string inFileNameKS = "test_input_ks.csv";
+    //string inFileNameKS = "test_input_ks.csv";
+    string inFileNameKS = "ks_celltypes/daphne-cell-types_ks.csv";
     string inFileNameSM = "test_input_sm.csv";
 
-    long inKSLength = readFileLines(inFileNameKS, lineListKS);
+    long inKSLength = readFileLines(inFileNameKS, lineListKS) - 1; //-1 accounts for the header line
+    lineListKS.erase(lineListKS.begin()); //delete header line
     cout << "Read KS file. Length: " << inKSLength << std::endl;
 
     int numSamples = createKSSamples(lineListKS, KSsamples);
     cout << "Created KS samples. Number: " << (numSamples+1) << std::endl;
-    displayAllSamples(KSsamples);
+    //displayAllSamples(KSsamples);
 
     //TODO make this a loop to read in more than 1 file/create more than 1 SM Sample
     long inSMLength = readFileLines(inFileNameSM, lineListSM) - 1; //-1 accounts for the header line
@@ -37,18 +41,17 @@ int main(int argc, char** argv){
 
     createSMSample(lineListSM, SMsamples);
     cout << "Created SM sample." << std::endl;
-    displayAllSamples(SMsamples);
+    //displayAllSamples(SMsamples);
 
-    vector <DA::Disagreement*> disagreements;
-    compareOutputs(KSsamples, SMsamples, disagreements);
+    //vector <DA::Disagreement*> disagreements;
+    //compareOutputs(KSsamples, SMsamples, disagreements);
 
-    disagreements.at(0)->displayDifferences();
+    //disagreements.at(0)->displayDifferences();
 
-    KSsamples.at(0)->countCellsNonS();
-    cout << "Counted KS\n";
-    SMsamples.at(0)->countCellsNonS();
-    cout << "Counted SM\n";
-    displayAllCellCounts(KSsamples, SMsamples);  
+    countCells(KSsamples);
+    countCells(SMsamples);
+    //displayAllCellCounts(KSsamples, SMsamples);
+    writeAllCellCounts(KSsamples, SMsamples);
 
     return 0;
 }
@@ -75,12 +78,18 @@ int createKSSamples(vector <string> const &lineList, vector <CL::Sample*> &sampl
     samples.push_back(tmp);
     int numSamples = 0; //0 indexed
     string currentSample = "";
+    bool anyAdded = false;
+
     for(int i = 0; i < lineList.size(); i++){
         int added;
         CL::cellType *tmpCell = samples.at(numSamples)->parseKSFields(lineList.at(i), added);
-        if(i == 0 && (tmpCell->sampleNum).compare("") != 0){ currentSample = tmpCell->sampleNum; samples.at(numSamples)->pushCell(tmpCell);}
-        else if(tmpCell->sampleNum.compare(currentSample) == 0){ samples.at(numSamples)->pushCell(tmpCell);}
-        else if(tmpCell->sampleNum.compare("") != 0){
+        if(!anyAdded && added == 1){
+            currentSample = tmpCell->sampleNum; 
+            samples.at(numSamples)->pushCell(tmpCell);
+            anyAdded = true;
+        }
+        else if(anyAdded && tmpCell->sampleNum.compare(currentSample) == 0){ samples.at(numSamples)->pushCell(tmpCell);}
+        else if(anyAdded && tmpCell->sampleNum.compare("") != 0){
             if(currentSample.compare(tmpCell->sampleNum) != 0){ 
                 currentSample = tmpCell->sampleNum; 
                 numSamples++;
@@ -146,6 +155,12 @@ int compareNonStrict(string non_strict1, string non_strict2){ //this just accoun
     return(tmp1.compare(tmp2));
 }
 
+void countCells(vector <CL::Sample*> &samples){
+    for(int i = 0; i < samples.size(); i++){
+        samples.at(i)->countCellsNonS();
+    }
+}
+
 void displayAllSamples(vector <CL::Sample*> &samples){
     for(int i = 0; i < samples.size(); i++){
         displaySample(samples.at(i));
@@ -173,5 +188,24 @@ void displayAllCellCounts(vector <CL::Sample*> &KSsamples, vector <CL::Sample*> 
 void displayCellCount(CL::Sample *sample){
     for(int i = 0; i < sample->getCellTotals().size(); i++){
         cout << sample->getCellTotals().at(i)->cellTypeName << ": " << sample->getCellTotals().at(i)->count << std::endl;
+    }
+}
+
+void writeAllCellCounts(vector <CL::Sample*> &KSsamples, vector <CL::Sample*> &SMsamples){
+    string ofdir = "cell_counts/";
+    ofstream ofile;
+    for(int i = 0; i < KSsamples.size(); i++){
+        string sampleNum;
+        if(KSsamples.at(i)->getCells().size() > 0){ 
+            sampleNum = KSsamples.at(i)->getCells().at(0)->sampleNum;
+            string ofilepath = ofdir + sampleNum + ".csv";
+            ofile.open(ofilepath);
+
+            for(int j = 0; j < KSsamples.at(i)->getCellTotals().size(); j++){
+                ofile << '"' << KSsamples.at(i)->getCellTotals().at(j)->cellTypeName << '"' << "," << KSsamples.at(i)->getCellTotals().at(j)->count << std::endl;
+            }
+            //TODO now append the SMsamples numbers
+            ofile.close();
+        }
     }
 }

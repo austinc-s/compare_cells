@@ -1,4 +1,6 @@
 .vscode/
+ks_celltypes/
+cell_counts/
 
 test_input_ks.csv
 test_input_sm.csv
