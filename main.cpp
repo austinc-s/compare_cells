@@ -12,6 +12,8 @@ int compareCells(CL::cellType *cell1, CL::cellType *cell2);
 int compareNonStrict(string non_strict1, string non_strict2);
 void displayAllSamples(vector <CL::Sample*> &samples);
 void displaySample(CL::Sample *sample);
+void displayAllCellCounts(vector <CL::Sample*> &KSsamples, vector <CL::Sample*> &SMsamples);
+void displayCellCount(CL::Sample *sample);
 
 int main(int argc, char** argv){
     vector <CL::Sample*> KSsamples;
@@ -40,7 +42,13 @@ int main(int argc, char** argv){
     vector <DA::Disagreement*> disagreements;
     compareOutputs(KSsamples, SMsamples, disagreements);
 
-    disagreements.at(0)->displayDifferences();  
+    disagreements.at(0)->displayDifferences();
+
+    KSsamples.at(0)->countCellsNonS();
+    cout << "Counted KS\n";
+    SMsamples.at(0)->countCellsNonS();
+    cout << "Counted SM\n";
+    displayAllCellCounts(KSsamples, SMsamples);  
 
     return 0;
 }
@@ -148,5 +156,22 @@ void displaySample(CL::Sample *sample){
     for(int i = 0; i < sample->getCells().size(); i++){
         cout << sample->getCells().at(i)->sampleNum << ", " << sample->getCells().at(i)->index << ", " << sample->getCells().at(i)->strictType <<
             ", " << sample->getCells().at(i)->non_strictType << std::endl;
+    }
+}
+
+void displayAllCellCounts(vector <CL::Sample*> &KSsamples, vector <CL::Sample*> &SMsamples){
+    for(int i = 0; i < KSsamples.size(); i++){
+        if(KSsamples.at(i)->getCells().size() > 0){ cout << "KS-SAMPLE " << KSsamples.at(i)->getCells().at(0)->sampleNum << std::endl;}
+        displayCellCount(KSsamples.at(i));
+    }
+    for(int i = 0; i < SMsamples.size(); i++){
+        if(SMsamples.at(i)->getCells().size() > 0){ cout << "SM-SAMPLE " << SMsamples.at(i)->getCells().at(0)->sampleNum << std::endl;}
+        displayCellCount(SMsamples.at(i));
+    }
+}
+
+void displayCellCount(CL::Sample *sample){
+    for(int i = 0; i < sample->getCellTotals().size(); i++){
+        cout << sample->getCellTotals().at(i)->cellTypeName << ": " << sample->getCellTotals().at(i)->count << std::endl;
     }
 }

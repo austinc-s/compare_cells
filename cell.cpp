@@ -81,6 +81,33 @@ CL::cellType* CL::Sample::parseSMFields(std::string inLine){
     return tmp;
 }
 
+/*countCells
+* Iterates through the cells vector and counts the number of each cell type based on non_strictType
+* Creates a struct for each cell type in cellTotals vector
+*/
+void CL::Sample::countCellsNonS(){
+    if(cells.size() == 0){ return;}
+    CL::cellTotal* tmp = new CL::cellTotal; //account for first iteration
+    tmp->cellTypeName = cells.at(0)->non_strictType;
+    tmp->count = 1;
+    cellTotals.push_back(tmp);
+    for(int i = 1; i < cells.size(); i++){
+        bool found = false;
+        for(int j = 0; j < cellTotals.size(); j++){
+            if(compareNonStrict(cells.at(i)->non_strictType, cellTotals.at(j)->cellTypeName) == 0){
+                found = true;
+                (cellTotals.at(j)->count)++;
+            }
+        }
+        if(!found){
+            CL::cellTotal* tmp2 = new CL::cellTotal;
+            tmp2->cellTypeName = cells.at(i)->non_strictType;
+            tmp2->count = 1;
+            cellTotals.push_back(tmp2);
+        }
+    }
+}
+
 /*makeCell()
 * Allocates memory for a cellType struct and initializes fields with the function parameters
 * Returns a pointer to the cellType struct
@@ -118,6 +145,16 @@ std::string CL::Sample::extractIndex(std::string inIndex){
     return(inIndex.substr(index, inIndex.size()));
 }
 
+/*compareNonStrict
+* Compares two strings after changing first character of each to lower case
+*/
+int CL::Sample::compareNonStrict(string non_strict1, string non_strict2){ //this just accounts for "unknown" vs "Unknown"
+    string tmp1, tmp2;
+    tmp1 = non_strict1; tmp1[0] = tolower(tmp1[0]);
+    tmp2 = non_strict2; tmp2[0] = tolower(tmp2[0]);
+    return(tmp1.compare(tmp2));
+}
+
 /*Sample()
 * Default constructor for Sample class
 */
@@ -128,4 +165,5 @@ CL::Sample::Sample(){}
 */
 CL::Sample::~Sample(){
     for(int i = 0; i < cells.size(); i++){ delete cells.at(i); cells.at(i) = NULL;}
+    for(int i = 0; i < cellTotals.size(); i++){ delete cellTotals.at(i); cellTotals.at(i) = NULL;}
 }
