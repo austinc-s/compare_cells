@@ -4,7 +4,6 @@
 #include <iomanip>
 #include <vector>
 #include <string>
-#include <cstring>
 
 namespace CL{
     struct cellType{
@@ -24,6 +23,8 @@ namespace CL{
             //public functions
             CL::cellType* parseKSFields(std::string inLine, int &added);
             CL::cellType* parseSMFields(std::string inLine);
+
+            int compareCells(CL::cellType *cell1, CL::cellType *cell2);
 
             //getters
             std::vector <CL::cellType*> const &getCells(){return cells;}

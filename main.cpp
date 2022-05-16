@@ -1,10 +1,15 @@
 #include "cell.hpp"
+#include "disagreements.hpp"
 
 using namespace std;
 
 long readFileLines(string inFileName, vector <string> &lineList);
 int createKSSamples(vector <string> const &lineList, vector <CL::Sample*> &samples);
 void createSMSample(vector <string> const &lineList, vector <CL::Sample*> &samples);
+void compareOutputs(vector <CL::Sample*> &KSsamples, vector <CL::Sample*> &SMsamples, vector <DA::Disagreement*> &difs);
+void compareSamples(CL::Sample* KSsample, CL::Sample* SMsample, DA::Disagreement* difs);
+int compareCells(CL::cellType *cell1, CL::cellType *cell2);
+int compareNonStrict(string non_strict1, string non_strict2);
 void displayAllSamples(vector <CL::Sample*> &samples);
 void displaySample(CL::Sample *sample);
 
@@ -19,20 +24,23 @@ int main(int argc, char** argv){
     long inKSLength = readFileLines(inFileNameKS, lineListKS);
     cout << "Read KS file. Length: " << inKSLength << std::endl;
 
+    int numSamples = createKSSamples(lineListKS, KSsamples);
+    cout << "Created KS samples. Number: " << (numSamples+1) << std::endl;
+    displayAllSamples(KSsamples);
+
+    //TODO make this a loop to read in more than 1 file/create more than 1 SM Sample
     long inSMLength = readFileLines(inFileNameSM, lineListSM) - 1; //-1 accounts for the header line
     lineListSM.erase(lineListSM.begin()); //delete header line
     cout << "Read SM file. Length: " << inSMLength << std::endl;
 
-
-    int numSamples = createKSSamples(lineListKS, KSsamples);
-    cout << "Created KS samples. Number: " << (numSamples+1) << std::endl;
-
-    displayAllSamples(KSsamples);
-
     createSMSample(lineListSM, SMsamples);
     cout << "Created SM sample." << std::endl;
-
     displayAllSamples(SMsamples);
+
+    vector <DA::Disagreement*> disagreements;
+    compareOutputs(KSsamples, SMsamples, disagreements);
+
+    disagreements.at(0)->displayDifferences();  
 
     return 0;
 }
@@ -86,6 +94,48 @@ void createSMSample(vector <string> const &lineList, vector <CL::Sample*> &sampl
         tmp->pushCell(tmpCell);
     }
     samples.push_back(tmp);
+}
+
+void compareOutputs(vector <CL::Sample*> &KSsamples, vector <CL::Sample*> &SMsamples, vector <DA::Disagreement*> &difs){
+    if(KSsamples.size() != SMsamples.size()){
+        cout << "ERROR: Number of samples is not the same.\n";
+        return;
+    }
+    for(int i = 0; i < KSsamples.size(); i++){
+        DA::Disagreement *tmp = new DA::Disagreement();
+        compareSamples(KSsamples.at(i), SMsamples.at(i), tmp);
+        difs.push_back(tmp);
+    }
+}
+
+void compareSamples(CL::Sample* KSsample, CL::Sample* SMsample, DA::Disagreement* difs){ //helper for compareOutputs
+    if(KSsample->getCells().size() != SMsample->getCells().size()){
+        cout << "ERROR: Number of cells is not the same.\n";
+        return;
+    }
+    for(int i = 0; i < KSsample->getCells().size(); i++){
+        int result = compareCells(KSsample->getCells().at(i), SMsample->getCells().at(i));
+        if(result != 0){ difs->pushDifference(KSsample->getCells().at(i), SMsample->getCells().at(i), result);}
+    }
+}
+
+/*compareCells
+* Determines if 2 cells contain the same values
+* Returns 0 if same. If not same, returns 1 for dif sample #, 2 for dif index, 3 for dif strictType, 4 for dif non_strictType
+*/
+int compareCells(CL::cellType *cell1, CL::cellType *cell2){
+    if(cell1->sampleNum.compare(cell2->sampleNum) != 0){ return 1;}
+    else if(cell1->index.compare(cell2->index) != 0){ return 2;}
+    //else if(cell1->strictType.compare(cell2->strictType) != 0){ return 3;} //ignore strict since scimap has no inconc equivalent
+    else if(compareNonStrict(cell1->non_strictType, cell2->non_strictType) != 0){ return 4;}
+    else return 0;
+}
+
+int compareNonStrict(string non_strict1, string non_strict2){ //this just accounts for "unknown" vs "Unknown"
+    string tmp1, tmp2;
+    tmp1 = non_strict1; tmp1[0] = tolower(tmp1[0]);
+    tmp2 = non_strict2; tmp2[0] = tolower(tmp2[0]);
+    return(tmp1.compare(tmp2));
 }
 
 void displayAllSamples(vector <CL::Sample*> &samples){
