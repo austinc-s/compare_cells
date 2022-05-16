@@ -1,6 +1,7 @@
 .vscode/
 
 test_input_ks.csv
+test_input_sm.csv
 
 cell.o
 main.o

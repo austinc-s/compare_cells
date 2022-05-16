@@ -22,7 +22,8 @@ namespace CL{
             ~Sample();
 
             //public functions
-            CL::cellType* parseFields(std::string inLine, int &added);
+            CL::cellType* parseKSFields(std::string inLine, int &added);
+            CL::cellType* parseSMFields(std::string inLine);
 
             //getters
             std::vector <CL::cellType*> const &getCells(){return cells;}
@@ -33,5 +34,7 @@ namespace CL{
             std::vector <CL::cellType*> cells;
 
             CL::cellType *makeCell(std::string sampleNum_in, std::string index_in, std::string strictType_in, std::string non_strictType_in);
+            std::string extractSampleNum(std::string inNum);
+            std::string extractIndex(std::string inIndex);
     };
 }
