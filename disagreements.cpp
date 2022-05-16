@@ -25,12 +25,12 @@ std::string DA::Disagreement::createDump(CL::cellType *KScell, CL::cellType *SMc
     token+=(to_string(type)); token+=',';
     token+=KScell->sampleNum; token+=',';
     token+=KScell->index; token+=',';
-    token+=KScell->strictType; token+=',';
-    token+=KScell->non_strictType; token+=',';
+    token+='"'; token+=KScell->strictType; token+='"'; token+=',';
+    token+='"'; token+=KScell->non_strictType; token+='"'; token+=',';
     token+=SMcell->sampleNum; token+=',';
     token+=SMcell->index; token+=',';
-    token+=SMcell->strictType; token+=',';
-    token+=SMcell->non_strictType;
+    token+='"'; token+=SMcell->strictType; token+='"'; token+=',';
+    token+='"'; token+=SMcell->non_strictType; token+='"';
     return token;
 }
 
