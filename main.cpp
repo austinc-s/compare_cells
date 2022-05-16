@@ -24,7 +24,8 @@ int main(int argc, char** argv){
     vector <string> lineListSM;
     //string inFileNameKS = "test_input_ks.csv";
     string inFileNameKS = "ks_celltypes/daphne-cell-types_ks.csv";
-    string inFileNameSM = "test_input_sm.csv";
+    //string inFileNameSM = "test_input_sm.csv";
+    string smdir = "../DAPHNe/cell_types/Sample_Specific/";
 
     long inKSLength = readFileLines(inFileNameKS, lineListKS) - 1; //-1 accounts for the header line
     lineListKS.erase(lineListKS.begin()); //delete header line
@@ -32,15 +33,16 @@ int main(int argc, char** argv){
 
     int numSamples = createKSSamples(lineListKS, KSsamples);
     cout << "Created KS samples. Number: " << (numSamples+1) << std::endl;
-    //displayAllSamples(KSsamples);
 
-    //TODO make this a loop to read in more than 1 file/create more than 1 SM Sample
-    long inSMLength = readFileLines(inFileNameSM, lineListSM) - 1; //-1 accounts for the header line
-    lineListSM.erase(lineListSM.begin()); //delete header line
-    cout << "Read SM file. Length: " << inSMLength << std::endl;
+    for(int i = 0; i < KSsamples.size(); i++){
+        string inFileNameSM = smdir + KSsamples.at(i)->getCells().at(0)->sampleNum + "/obs.csv";
+        long inSMLength = readFileLines(inFileNameSM, lineListSM) - 1; //-1 accounts for the header line
+        lineListSM.erase(lineListSM.begin()); //delete header line
+        //cout << "Read SM file. Length: " << inSMLength << std::endl;
 
-    createSMSample(lineListSM, SMsamples);
-    cout << "Created SM sample." << std::endl;
+        createSMSample(lineListSM, SMsamples);
+        cout << "Created SM sample no. " << SMsamples.at(i)->getCells().at(0)->sampleNum << std::endl;
+    }
     //displayAllSamples(SMsamples);
 
     //vector <DA::Disagreement*> disagreements;
@@ -200,11 +202,16 @@ void writeAllCellCounts(vector <CL::Sample*> &KSsamples, vector <CL::Sample*> &S
             sampleNum = KSsamples.at(i)->getCells().at(0)->sampleNum;
             string ofilepath = ofdir + sampleNum + ".csv";
             ofile.open(ofilepath);
-
+            ofile << "KENICHI_R,'" << sampleNum << ",Total:," << KSsamples.at(i)->getCells().size() << std:: endl; 
             for(int j = 0; j < KSsamples.at(i)->getCellTotals().size(); j++){
                 ofile << '"' << KSsamples.at(i)->getCellTotals().at(j)->cellTypeName << '"' << "," << KSsamples.at(i)->getCellTotals().at(j)->count << std::endl;
             }
-            //TODO now append the SMsamples numbers
+            
+            ofile << "\nSCIMAP,'" << sampleNum << ",Total:," << SMsamples.at(i)->getCells().size() << std::endl;
+            for(int j = 0; j < SMsamples.at(i)->getCellTotals().size(); j++){
+                ofile << '"' << SMsamples.at(i)->getCellTotals().at(j)->cellTypeName << '"' << "," << SMsamples.at(i)->getCellTotals().at(j)->count << std::endl;
+            }
+
             ofile.close();
         }
     }
